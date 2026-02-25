@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Khata · Factory to Shop (Nepal/India)</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- SheetJS for Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF + autoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Nirmala UI', Roboto, sans-serif;
+        }
+        body {
+            background: #f2f6fa;
+            padding: 1.8rem 1.2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .app-container {
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        /* header with bilingual emphasis */
+        .main-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .brand h1 {
+            font-size: 2.2rem;
+            font-weight: 650;
+            color: #1e3c5c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand h1 i {
+            background: #d9eaf5;
+            padding: 12px;
+            border-radius: 50%;
+            color: #b45f1b;
+        }
+        .brand .badge {
+            background: #e8f0e8;
+            color: #1f5f2e;
+            padding: 0.4rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 1rem;
+        }
+        .badge i {
+            margin: 0 5px;
+        }
+        .action-btns {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.7rem 1.8rem;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            color: #1e3c5c;
+            box-shadow: 0 8px 16px rgba(0,30,40,0.08);
+            cursor: pointer;
+            transition: 0.15s;
+            font-size: 1rem;
+            border: 1px solid #c9ddec;
+        }
+        .btn-excel { background: #1f7b4d; color: white; border: none; }
+        .btn-pdf { background: #b45f1b; color: white; border: none; }
+        .btn-sample { background: #2c5f8a; color: white; border: none; }
+
+        /* two card panels : SUPPLIER (Factory) and CUSTOMER (Shop) */
+        .dual-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        .panel {
+            background: white;
+            border-radius: 32px;
+            padding: 1.6rem 1.8rem;
+            box-shadow: 0 18px 30px -12px #00000030;
+        }
+        .panel-supplier { border-left: 8px solid #b45f1b; }
+        .panel-customer { border-left: 8px solid #1e6b3b; }
+        .panel h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .panel-supplier h2 i { color: #b45f1b; }
+        .panel-customer h2 i { color: #1e6b3b; }
+
+        /* mini cards for summary inside each panel */
+        .row-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.2rem 0 1.8rem;
+        }
+        .stat-mini {
+            background: #f0f7ff;
+            flex: 1 1 100px;
+            padding: 0.8rem 1rem;
+            border-radius: 24px;
+            text-align: center;
+        }
+        .stat-mini .label {
+            font-size: 0.9rem;
+            color: #335577;
+        }
+        .stat-mini .value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #0e2a41;
+        }
+
+        /* form inside panel */
+        .form-inline {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+            margin-top: 12px;
+        }
+        .form-inline .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .field label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #2b4c6e;
+        }
+        .field input, .field select {
+            padding: 12px 15px;
+            border-radius: 40px;
+            border: 1.5px solid #d7e3ef;
+            background: #fcfdff;
+            font-size: 0.95rem;
+        }
+        .add-btn {
+            background: #1e3c5c;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 12px 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 48px;
+        }
+        .add-btn-supplier { background: #b45f1b; }
+        .add-btn-customer { background: #1e6b3b; }
+
+        /* installment tables area */
+        .tables-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .table-wrapper {
+            background: white;
+            border-radius: 28px;
+            padding: 1.5rem;
+            box-shadow: 0 15px 25px -12px #0e2a4130;
+            overflow-x: auto;
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .table-header h3 {
+            font-size: 1.5rem;
+            color: #183c55;
+        }
+        .clear-icon {
+            color: #ac3b3b;
+            background: #ffebeb;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        th {
+            background: #e7f0fa;
+            color: #1e3c5c;
+            padding: 14px 6px;
+            text-align: left;
+        }
+        td {
+            padding: 14px 6px;
+            border-bottom: 1px solid #dae5f0;
+        }
+        .badge {
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .badge.pending { background: #ffecdc; color: #a44d0e; }
+        .badge.paid { background: #d9f0d9; color: #146c2e; }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #b02b2b;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .small-note {
+            color: #6386a8;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- header -->
+    <div class="main-header">
+        <div class="brand">
+            <h1><i class="fas fa-store-alt"></i> व्यापार खाता · Vyapaar Khata</h1>
+            <div class="badge"><i class="fas fa-rupee-sign"></i> Nepal / India · Factory to Shop · किस्ता ट्र्याकिङ</div>
+        </div>
+        <div class="action-btns">
+            <button class="btn btn-excel" id="excelAllBtn"><i class="fas fa-file-excel"></i> Excel (both)</button>
+            <button class="btn btn-pdf" id="pdfAllBtn"><i class="fas fa-file-pdf"></i> PDF (both)</button>
+            <button class="btn btn-sample" id="sampleDataBtn"><i class="fas fa-flask"></i> Sample Data</button>
+        </div>
+    </div>
+
+    <!-- two main panels: Supplier (Factory) and Customer (Shop) -->
+    <div class="dual-panel">
+        <!-- LEFT: Supplier (Factory se mal lete hain, unhen installment dete hain) -->
+        <div class="panel panel-supplier" id="supplierPanel">
+            <h2><i class="fas fa-warehouse"></i> Factory / Supplier ( मल लिनु / दिनु )</h2>
+            <div class="row-stats">
+                <div class="stat-mini"><span class="label">Total outstanding (दिनु)</span><span class="value" id="supplierOutstanding">₹0</span></div>
+                <div class="stat-mini"><span class="label">Installments left</span><span class="value" id="supplierInstallmentsLeft">0</span></div>
+            </div>
+            <!-- form to add new supplier dues / installment -->
+            <div class="form-inline">
+                <div class="field">
+                    <label><i class="fas fa-user"></i> Factory name</label>
+                    <input type="text" id="supplierName" placeholder="e.g. Fab India, Katmandu">
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-rupee-sign"></i> Total amount</label>
+                    <input type="number" id="supplierAmount" min="1" value="5000">
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-tally"></i> Installments</label>
+                    <input type="number" id="supplierInstallments" min="1" value="3">
+                </div>
+                <button class="add-btn add-btn-supplier" id="addSupplierBtn"><i class="fas fa-plus"></i> Add due</button>
+            </div>
+        </div>
+
+        <!-- RIGHT: Customer (mera shop se saman lete hain, mujhe installment dete hain) -->
+        <div class="panel panel-customer" id="customerPanel">
+            <h2><i class="fas fa-shop"></i> Shop / Customer ( मल दिनु / लिनु )</h2>
+            <div class="row-stats">
+                <div class="stat-mini"><span class="label">Total receivable (लिनु)</span><span class="value" id="customerReceivable">₹0</span></div>
+                <div class="stat-mini"><span class="label">Installments left</span><span class="value" id="customerInstallmentsLeft">0</span></div>
+            </div>
+            <!-- form to add new customer dues (they pay me in installments) -->
+            <div class="form-inline">
+                <div class="field">
+                    <label><i class="fas fa-user"></i> Shop name</label>
+                    <input type="text" id="customerName" placeholder="e.g. Kirana store, Delhi">
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-rupee-sign"></i> Total amount</label>
+                    <input type="number" id="customerAmount" min="1" value="3000">
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-tally"></i> Installments</label>
+                    <input type="number" id="customerInstallments" min="1" value="2">
+                </div>
+                <button class="add-btn add-btn-customer" id="addCustomerBtn"><i class="fas fa-plus"></i> Add due</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two tables side by side: supplier dues and customer dues -->
+    <div class="tables-section">
+        <!-- Supplier Table : what I owe to factory (installment tracking) -->
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h3><i class="fas fa-truck"></i> Factory dues ( मल लिनु बाँकी )</h3>
+                <i class="fas fa-trash-alt clear-icon" id="clearSupplierBtn" title="Clear all supplier entries"></i>
+            </div>
+            <table id="supplierTable">
+                <thead><tr><th>Factory</th><th>Total (₹)</th><th>Paid</th><th>Left</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="supplierBody"></tbody>
+            </table>
+            <div id="emptySupplierMsg" style="margin-top:15px; color:#666;"><i class="fas fa-info-circle"></i> No factory dues.</div>
+        </div>
+
+        <!-- Customer Table : what customers owe me -->
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h3><i class="fas fa-shopping-cart"></i> Customer dues ( मल लिनु बाँकी )</h3>
+                <i class="fas fa-trash-alt clear-icon" id="clearCustomerBtn" title="Clear all customer entries"></i>
+            </div>
+            <table id="customerTable">
+                <thead><tr><th>Shop</th><th>Total (₹)</th><th>Paid</th><th>Left</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="customerBody"></tbody>
+            </table>
+            <div id="emptyCustomerMsg" style="margin-top:15px; color:#666;"><i class="fas fa-info-circle"></i> No customer dues.</div>
+        </div>
+    </div>
+    <div class="small-note">
+        <i class="fas fa-hand-holding-heart"></i> किस्ता ट्र्याकिङ: हरेक पटक भुक्तानी गर्न पंक्तिमा क्लिक गर्नुहोस् । Installment tracking – click on “Pay / Receive” to record payment.
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- DATA STRUCTURES ----------
+        // supplierDues = [{ id, name, totalAmount, paidAmount, installments }]
+        let supplierDues = [];
+        // customerDues = [{ id, name, totalAmount, paidAmount, installments }]
+        let customerDues = [];
+
+        // Load from localStorage
+        function loadFromStorage() {
+            try {
+                const s = localStorage.getItem('supplierDues');
+                supplierDues = s ? JSON.parse(s) : [];
+                const c = localStorage.getItem('customerDues');
+                customerDues = c ? JSON.parse(c) : [];
+            } catch (e) { supplierDues = []; customerDues = []; }
+        }
+
+        // Save to localStorage
+        function saveToStorage() {
+            localStorage.setItem('supplierDues', JSON.stringify(supplierDues));
+            localStorage.setItem('customerDues', JSON.stringify(customerDues));
+        }
+
+        // Helper: per-installment amount (installments > 0)
+        function getInstallmentAmount(total, installments) {
+            if (installments <= 0) return total;
+            return Math.ceil(total / installments); // round up so sum reaches total
+        }
+
+        // ---------- RENDER both tables ----------
+        function refreshAll() {
+            renderSupplierTable();
+            renderCustomerTable();
+            updateStats();
+            saveToStorage();
+        }
+
+        // render supplier table (factory dues)
+        function renderSupplierTable() {
+            const tbody = document.getElementById('supplierBody');
+            const emptyMsg = document.getElementById('emptySupplierMsg');
+            if (supplierDues.length === 0) {
+                tbody.innerHTML = '';
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+                let html = '';
+                supplierDues.forEach(d => {
+                    const leftAmount = d.totalAmount - d.paidAmount;
+                    const leftInstallments = Math.ceil((d.totalAmount - d.paidAmount) / getInstallmentAmount(d.totalAmount, d.installments));
+                    const status = leftAmount <= 0 ? 'paid' : 'pending';
+                    html += `<tr>
+                        <td><strong>${escapeHtml(d.name)}</strong></td>
+                        <td>₹ ${d.totalAmount}</td>
+                        <td>₹ ${d.paidAmount}</td>
+                        <td>₹ ${leftAmount} (${Math.max(0,leftInstallments)} left)</td>
+                        <td><span class="badge ${status}">${status === 'paid' ? 'Paid' : 'Pending'}</span></td>
+                        <td>
+                            <button class="delete-btn" data-supplier-id="${d.id}" title="Delete"><i class="fas fa-trash"></i></button>
+                            ${leftAmount > 0 ? `<button class="pay-btn" data-supplier-id="${d.id}" style="background:#b45f1b; border:none; color:white; border-radius:40px; padding:5px 12px; margin-left:5px;"><i class="fas fa-rupee-sign"></i> Pay</button>` : ''}
+                        </td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+
+                // delete supplier
+                document.querySelectorAll('[data-supplier-id]').forEach(btn => {
+                    if (btn.classList.contains('delete-btn')) {
+                        btn.addEventListener('click', (e) => {
+                            const id = Number(btn.getAttribute('data-supplier-id'));
+                            supplierDues = supplierDues.filter(d => d.id !== id);
+                            refreshAll();
+                        });
+                    } else if (btn.classList.contains('pay-btn')) {
+                        btn.addEventListener('click', (e) => {
+                            const id = Number(btn.getAttribute('data-supplier-id'));
+                            const due = supplierDues.find(d => d.id === id);
+                            if (due) {
+                                const instAmount = getInstallmentAmount(due.totalAmount, due.installments);
+                                const newPaid = due.paidAmount + instAmount;
+                                due.paidAmount = Math.min(newPaid, due.totalAmount); // cap
+                                refreshAll();
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        // render customer table (shop dues)
+        function renderCustomerTable() {
+            const tbody = document.getElementById('customerBody');
+            const emptyMsg = document.getElementById('emptyCustomerMsg');
+            if (customerDues.length === 0) {
+                tbody.innerHTML = '';
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+                let html = '';
+                customerDues.forEach(d => {
+                    const leftAmount = d.totalAmount - d.paidAmount;
+                    const leftInstallments = Math.ceil((d.totalAmount - d.paidAmount) / getInstallmentAmount(d.totalAmount, d.installments));
+                    const status = leftAmount <= 0 ? 'paid' : 'pending';
+                    html += `<tr>
+                        <td><strong>${escapeHtml(d.name)}</strong></td>
+                        <td>₹ ${d.totalAmount}</td>
+                        <td>₹ ${d.paidAmount}</td>
+                        <td>₹ ${leftAmount} (${Math.max(0,leftInstallments)} left)</td>
+                        <td><span class="badge ${status}">${status === 'paid' ? 'Paid' : 'Pending'}</span></td>
+                        <td>
+                            <button class="delete-btn" data-customer-id="${d.id}" title="Delete"><i class="fas fa-trash"></i></button>
+                            ${leftAmount > 0 ? `<button class="receive-btn" data-customer-id="${d.id}" style="background:#1e6b3b; border:none; color:white; border-radius:40px; padding:5px 12px; margin-left:5px;"><i class="fas fa-rupee-sign"></i> Receive</button>` : ''}
+                        </td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+
+                document.querySelectorAll('[data-customer-id]').forEach(btn => {
+                    if (btn.classList.contains('delete-btn')) {
+                        btn.addEventListener('click', (e) => {
+                            const id = Number(btn.getAttribute('data-customer-id'));
+                            customerDues = customerDues.filter(d => d.id !== id);
+                            refreshAll();
+                        });
+                    } else if (btn.classList.contains('receive-btn')) {
+                        btn.addEventListener('click', (e) => {
+                            const id = Number(btn.getAttribute('data-customer-id'));
+                            const due = customerDues.find(d => d.id === id);
+                            if (due) {
+                                const instAmount = getInstallmentAmount(due.totalAmount, due.installments);
+                                const newPaid = due.paidAmount + instAmount;
+                                due.paidAmount = Math.min(newPaid, due.totalAmount);
+                                refreshAll();
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.replace(/[&<>"]/g, function(m) {
+                if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; if(m === '"') return '&quot;';
+                return m;
+            });
+        }
+
+        // update summary panels (outstanding, installments left)
+        function updateStats() {
+            // supplier total outstanding (sum of (total - paid))
+            let supplierOut = supplierDues.reduce((acc, d) => acc + (d.totalAmount - d.paidAmount), 0);
+            document.getElementById('supplierOutstanding').innerText = '₹' + supplierOut.toLocaleString('en-IN');
+
+            let supplierInstallmentsLeft = supplierDues.reduce((acc, d) => {
+                if (d.paidAmount >= d.totalAmount) return acc;
+                const perInst = getInstallmentAmount(d.totalAmount, d.installments);
+                const leftAmount = d.totalAmount - d.paidAmount;
+                return acc + Math.ceil(leftAmount / perInst);
+            }, 0);
+            document.getElementById('supplierInstallmentsLeft').innerText = supplierInstallmentsLeft;
+
+            // customer total receivable
+            let custOut = customerDues.reduce((acc, d) => acc + (d.totalAmount - d.paidAmount), 0);
+            document.getElementById('customerReceivable').innerText = '₹' + custOut.toLocaleString('en-IN');
+            let custInstallmentsLeft = customerDues.reduce((acc, d) => {
+                if (d.paidAmount >= d.totalAmount) return acc;
+                const perInst = getInstallmentAmount(d.totalAmount, d.installments);
+                const leftAmount = d.totalAmount - d.paidAmount;
+                return acc + Math.ceil(leftAmount / perInst);
+            }, 0);
+            document.getElementById('customerInstallmentsLeft').innerText = custInstallmentsLeft;
+        }
+
+        // Add Supplier due (factory)
+        function addSupplierDue() {
+            const name = document.getElementById('supplierName').value.trim();
+            if (!name) { alert('Factory name required'); return; }
+            const total = parseFloat(document.getElementById('supplierAmount').value);
+            if (isNaN(total) || total <= 0) { alert('Valid amount required'); return; }
+            const installments = parseInt(document.getElementById('supplierInstallments').value, 10);
+            if (installments < 1) { alert('Installments must be at least 1'); return; }
+
+            const newDue = {
+                id: Date.now() + Math.random()*100,
+                name: name,
+                totalAmount: total,
+                paidAmount: 0,
+                installments: installments,
+            };
+            supplierDues.push(newDue);
+            refreshAll();
+            // clear supplier form fields
+            document.getElementById('supplierName').value = '';
+            document.getElementById('supplierAmount').value = '5000';
+            document.getElementById('supplierInstallments').value = '3';
+        }
+
+        // Add Customer due (shop)
+        function addCustomerDue() {
+            const name = document.getElementById('customerName').value.trim();
+            if (!name) { alert('Shop name required'); return; }
+            const total = parseFloat(document.getElementById('customerAmount').value);
+            if (isNaN(total) || total <= 0) { alert('Valid amount required'); return; }
+            const installments = parseInt(document.getElementById('customerInstallments').value, 10);
+            if (installments < 1) { alert('Installments must be at least 1'); return; }
+
+            const newDue = {
+                id: Date.now() + Math.random()*1000,
+                name: name,
+                totalAmount: total,
+                paidAmount: 0,
+                installments: installments,
+            };
+            customerDues.push(newDue);
+            refreshAll();
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerAmount').value = '3000';
+            document.getElementById('customerInstallments').value = '2';
+        }
+
+        // Sample data
+        function addSampleData() {
+            supplierDues = [
+                { id: 1001, name: 'Fab India - Kathmandu', totalAmount: 15000, paidAmount: 5000, installments: 4 },
+                { id: 1002, name: 'Delhi Cloth Mill', totalAmount: 22000, paidAmount: 4000, installments: 6 },
+                { id: 1003, name: 'Birgunj Textile', totalAmount: 8000, paidAmount: 0, installments: 2 },
+            ];
+            customerDues = [
+                { id: 2001, name: 'Ram Kirana Store', totalAmount: 5000, paidAmount: 1000, installments: 3 },
+                { id: 2002, name: 'Pashupati General', totalAmount: 11200, paidAmount: 5200, installments: 5 },
+                { id: 2003, name: 'Hari Om Shop', totalAmount: 3300, paidAmount: 0, installments: 3 },
+            ];
+            refreshAll();
+        }
+
+        // Clear all suppliers
+        document.getElementById('clearSupplierBtn').addEventListener('click', ()=>{
+            if (supplierDues.length && confirm('Clear all factory dues?')) {
+                supplierDues = [];
+                refreshAll();
+            }
+        });
+        document.getElementById('clearCustomerBtn').addEventListener('click', ()=>{
+            if (customerDues.length && confirm('Clear all customer dues?')) {
+                customerDues = [];
+                refreshAll();
+            }
+        });
+
+        // ADD event listeners
+        document.getElementById('addSupplierBtn').addEventListener('click', addSupplierDue);
+        document.getElementById('addCustomerBtn').addEventListener('click', addCustomerDue);
+        document.getElementById('sampleDataBtn').addEventListener('click', addSampleData);
+
+        // EXCEL export (both tables combined)
+        document.getElementById('excelAllBtn').addEventListener('click', function() {
+            const supplierRows = supplierDues.map(d => ({
+                'Type': 'Factory (Payable)',
+                'Party': d.name,
+                'Total (₹)': d.totalAmount,
+                'Paid (₹)': d.paidAmount,
+                'Left (₹)': d.totalAmount - d.paidAmount,
+                'Installments': d.installments,
+            }));
+            const customerRows = customerDues.map(d => ({
+                'Type': 'Customer (Receivable)',
+                'Party': d.name,
+                'Total (₹)': d.totalAmount,
+                'Paid (₹)': d.paidAmount,
+                'Left (₹)': d.totalAmount - d.paidAmount,
+                'Installments': d.installments,
+            }));
+            const allRows = [...supplierRows, ...customerRows];
+            if (allRows.length === 0) { alert('No data'); return; }
+            const ws = XLSX.utils.json_to_sheet(allRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Vyapaar Khata');
+            XLSX.writeFile(wb, `business_khata_${new Date().toISOString().slice(0,10)}.xlsx`);
+        });
+
+        // PDF export (using jspdf)
+        document.getElementById('pdfAllBtn').addEventListener('click', function() {
+            if (supplierDues.length === 0 && customerDues.length === 0) { alert('No data'); return; }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            doc.setFontSize(18);
+            doc.text('Vyapaar Khata (Factory / Shop)', 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 14, 22);
+
+            // Supplier table
+            if (supplierDues.length) {
+                doc.text('Factory dues (payable)', 14, 32);
+                const supHead = ['Factory', 'Total', 'Paid', 'Left', 'Installments'];
+                const supBody = supplierDues.map(d => [d.name, '₹'+d.totalAmount, '₹'+d.paidAmount, '₹'+(d.totalAmount-d.paidAmount), d.installments]);
+                doc.autoTable({
+                    head: [supHead],
+                    body: supBody,
+                    startY: 35,
+                    theme: 'striped',
+                    headStyles: { fillColor: [180, 95, 27] },
+                });
+            }
+
+            // Customer table
+            let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 45;
+            if (customerDues.length) {
+                doc.text('Customer dues (receivable)', 14, finalY);
+                const custHead = ['Shop', 'Total', 'Paid', 'Left', 'Installments'];
+                const custBody = customerDues.map(d => [d.name, '₹'+d.totalAmount, '₹'+d.paidAmount, '₹'+(d.totalAmount-d.paidAmount), d.installments]);
+                doc.autoTable({
+                    head: [custHead],
+                    body: custBody,
+                    startY: finalY + 3,
+                    theme: 'striped',
+                    headStyles: { fillColor: [30, 107, 59] },
+                });
+            }
+            doc.save(`business_khata_${new Date().toISOString().slice(0,10)}.pdf`);
+        });
+
+        // Initialize
+        loadFromStorage();
+        refreshAll();
+    })();
+</script>
+</body>
+</html>
